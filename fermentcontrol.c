@@ -1,6 +1,6 @@
 // **********************************************
 // *                                            *
-// *              Brewcontrol                   *
+// *            FermentControl                  *
 // *                                            *
 // **********************************************
 // 2017-03-21
@@ -10,6 +10,7 @@
 // Version 0.4: * No crash when sensors are missing (temporary unconnected), 
 //              * append to logfile if it exists already
 //              * single temp logging per program start (for autostart and use with cron)
+// Version 0.5 Commented Output Switching
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -101,7 +102,7 @@ long get_time(char *charpointer, time_t starttime)
 int main()
 {
     char status[10];
-    char logfile[] = "brewcontrol_2017-11-26_ImperialStout_und_Copperbottom.log";
+    char logfile[] = "brewcontrol_2018-10-16_pilsfuersvolk.log";
     FILE *fp;
     char time_string [80];
     int ret;
@@ -114,29 +115,27 @@ int main()
     if(getFileExistence(logfile) == 0) { 
         fp = fopen(logfile,"a");
         fprintf(fp,"Welcome to BrewControl v0.4\n\n");
-        fprintf(fp,"date/time, seconds-since-start, t1(Luft)[°C], t2(Stout)[°C], t3[°C](Weizen),status\n");
+        fprintf(fp,"date/time, seconds-since-start, t1(at_bucket)[°C], t2 (fridge_top)[°C], t3[°C](liquid),status\n");
         fclose(fp);
     }
 
-//    while(1) {
-        int temp1 = get_temp(SENSOR1);
-        int temp2 = get_temp(SENSOR2);
-        int temp3 = get_temp(SENSOR3);
 
-        seconds_since_start = get_time(time_string, starttime);
+    int temp1 = get_temp(SENSOR1);   //10-000802f7cdae
+    int temp2 = get_temp(SENSOR2);   //10-000802f89e49
+    int temp3 = get_temp(SENSOR3);   //10-0008032e3d80
+    //int temp3 = get_temp(SENSOR4);
 
-        if(temp2 < temp_soll) {
-            ret = system(COMMAND_OFF);
-            strcpy(status, "OFF");
-        } else {
-            ret = system(COMMAND_ON);
-            strcpy(status, "ON");
-        }
+    seconds_since_start = get_time(time_string, starttime);
 
-        fp=fopen(logfile,"a");       
-        fprintf(fp,"%s, %5d, %5.2f, %5.2f, %5.2f, %s\n", time_string, seconds_since_start, (double)temp1/1000, (double)temp2/1000,(double)temp3/1000,status);
-        fclose(fp);       
-
-//        usleep(1*10*1000000);
+//    if(temp2 < temp_soll) {
+//        ret = system(COMMAND_OFF);
+//        strcpy(status, "OFF");
+//    } else {
+//        ret = system(COMMAND_ON);
+//        strcpy(status, "ON");
 //    }
+
+    fp=fopen(logfile,"a");       
+    fprintf(fp,"%s, %5d, %5.2f, %5.2f, %5.2f, %s\n", time_string, seconds_since_start, (double)temp1/1000, (double)temp2/1000,(double)temp3/1000,status);
+    fclose(fp);
 }
