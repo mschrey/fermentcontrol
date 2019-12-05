@@ -114,7 +114,7 @@ int main()
     
     if(getFileExistence(logfile) == 0) { 
         fp = fopen(logfile,"a");
-        fprintf(fp,"Welcome to BrewControl v0.4\n\n");
+        fprintf(fp,"Welcome to BrewControl v0.5\n\n");
         fprintf(fp,"date/time, seconds-since-start, t1(at_bucket)[°C], t2 (fridge_top)[°C], t3[°C](liquid),status\n");
         fclose(fp);
     }
