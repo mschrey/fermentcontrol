@@ -6,16 +6,15 @@ this initial commit does not offer any flexibility with regard to
 * which code is needed to control the RC outlet
 * set temperature is hard-coded
 
-
 so it probably will not be of any use for anybody until I get around to implementing a lot of flexibility for it...
 
 
 ## Compilation ##
-Compilation is done by executing 
+Compilation is done by executing  
 ``gcc fermentcontrol.c -o fermentcontrol``
 
 ## Start ##
-Place an entry as below in your crontab. Type 
+Place an entry as below in your crontab. Type  
 ``crontab -e ``
-and place the following line at the bottom
+and place the following line at the bottom  
 ``*/5 *  *   *   *    /home/pi/fermentcontrol/fermentcontrol``
