@@ -11,28 +11,17 @@
 //              * append to logfile if it exists already
 //              * single temp logging per program start (for autostart and use with cron)
 // Version 0.5 Commented Output Switching
+// Version 0.6 Discovery and Labens of One-Wire Sensors introduced
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>  //for strcpy
 #include <time.h>
+#include "onewirediscover.h"
 
 //28 00 4b 46 ff ff 0a 10 39 : crc=39 YES
 //28 00 4b 46 ff ff 0a 10 39 t=20125
 
-const char SENSOR1[50]     = "/sys/bus/w1/devices/10-000802f7cdae/w1_slave";
-const char SENSOR2[50]     = "/sys/bus/w1/devices/10-000802f89e49/w1_slave";
-const char SENSOR3[50]     = "/sys/bus/w1/devices/10-0008032e3d80/w1_slave";
-const char SENSOR4[50]     = "/sys/bus/w1/devices/28-0316a4a4eaff/w1_slave";
-
-const char COMMAND_ON[100]  = "/home/pi/raspberry-remote/send 11001 1 1 >> /home/pi/brewcontrol_raspberry-remote_output.log";  //outlet A
-const char COMMAND_OFF[100] = "/home/pi/raspberry-remote/send 11001 1 0 >> /home/pi/brewcontrol_raspberry-remote_output.log";  //outlet A
-
-char heaterStatus[] = "OFF";
-const int HYSTERESIS = 2;
-
-const int TIMEOUT_RAST_WAIT = 10;
-const int TIMEOUT_RAST_HEATUP = 10;
 
 //checks if a file exists. 
 // it returns
@@ -61,28 +50,6 @@ int getFileExistence(char * fileName)
 }
 
 
-int get_temp(const char * sensor)
-{
-    char temp_str1[20], temp_str2[10];
-    char str_long[100];
-    int temp_millicelsius;
-    FILE * fh;
-    fh = fopen(sensor, "r");
-    if (fh != NULL) {
-        fgets(str_long, 100, fh); //read first line
-        fscanf(fh, "%*2x %*2x %*2x %*2x %*2x %*2x %*2x %*2x %*2x %s\n", temp_str1);
-        fclose(fh);
-        sprintf(temp_str2, temp_str1+2, 5);
-        
-        temp_millicelsius = atoi(temp_str2);
-        //printf("temp    : %5.2f°C\n", (double)temp_millicelsius/1000);
-        return temp_millicelsius;
-    } else {
-        printf("sensor %s not found\n", sensor);
-        return -1000;
-    }
-
-}
 
 long get_time(char *charpointer, time_t starttime)
 { 
@@ -94,48 +61,56 @@ long get_time(char *charpointer, time_t starttime)
     strftime(charpointer, 80, "%F %T", timeinfo);
     
     long seconds_since_start = difftime(rawtime, starttime);
+    return seconds_since_start;
 }
-
 
 
 
 int main()
 {
-    char status[10];
-    char logfile[] = "brewcontrol_2018-10-16_pilsfuersvolk.log";
+    char logfile[] = "/home/pi/fermentcontrol/fermentcontrol_2020-05-21_ipa-simcoe-2020.log";
     FILE *fp;
     char time_string [80];
-    int ret;
     long seconds_since_start;
-    double temp_avg;
-    double temp_soll = 18;
     time_t starttime;
     time(&starttime);  // get current time; same as: timer = time(NULL)  
+
+    struct tempsensorlist *mytempsensorlist = NULL;
+    mytempsensorlist = get_temp_sensor(mytempsensorlist, "/sys/bus/w1/devices");   
+    struct tempsensorlist *current;
+    if(mytempsensorlist == NULL) {
+        printf("Error! No temp sensor found\n");
+        exit(-1);
+    }    
+    get_temp_sensor_labels(mytempsensorlist);
     
     if(getFileExistence(logfile) == 0) { 
         fp = fopen(logfile,"a");
         fprintf(fp,"Welcome to BrewControl v0.5\n\n");
-        fprintf(fp,"date/time, seconds-since-start, t1(at_bucket)[°C], t2 (fridge_top)[°C], t3[°C](liquid),status\n");
+        fprintf(fp,"date/time, seconds-since-start");
+        current = mytempsensorlist;
+        while(current != NULL) {
+            fprintf(fp, ", %s", current->label);
+            current = current->next;
+        }
+        fprintf(fp, "\n");        
         fclose(fp);
     }
 
-
-    int temp1 = get_temp(SENSOR1);   //10-000802f7cdae
-    int temp2 = get_temp(SENSOR2);   //10-000802f89e49
-    int temp3 = get_temp(SENSOR3);   //10-0008032e3d80
-    //int temp3 = get_temp(SENSOR4);
+    get_all_temps(mytempsensorlist);
 
     seconds_since_start = get_time(time_string, starttime);
 
-//    if(temp2 < temp_soll) {
-//        ret = system(COMMAND_OFF);
-//        strcpy(status, "OFF");
-//    } else {
-//        ret = system(COMMAND_ON);
-//        strcpy(status, "ON");
-//    }
-
     fp=fopen(logfile,"a");       
-    fprintf(fp,"%s, %5d, %5.2f, %5.2f, %5.2f, %s\n", time_string, seconds_since_start, (double)temp1/1000, (double)temp2/1000,(double)temp3/1000,status);
+    //fprintf(fp,"%s, %5d, %5.2f, %5.2f, %5.2f, %s\n", time_string, seconds_since_start, (double)temp1/1000, (double)temp2/1000, (double)temp3/1000, status);
+    fprintf(fp,"%s, %5ld", time_string, seconds_since_start);
+    current = mytempsensorlist;
+    while(current != NULL) {
+        fprintf(fp, ", %5.2f", (double)current->temp_mc/1000);
+        current = current->next;
+    }
+    fprintf(fp, "\n");
     fclose(fp);
+    
+    return 0;
 }

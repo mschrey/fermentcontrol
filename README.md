@@ -1,20 +1,25 @@
 # fermentcontrol
-Control (or at least log) fermentation of beer using a Raspberry Pi, 1Wire temperature sensors and Remote Controlled outlets
+Log fermentation of beer using a Raspberry Pi, 1Wire temperature sensors and Remote Controlled outlets
 
-this initial commit does not offer any flexibility with regard to 
-* which or how many temperature sensor are needed to be read
-* which code is needed to control the RC outlet
-* set temperature is hard-coded
+A small degree of flexibility is introduced to auto-discovery of connected 1Wire temperature sensors. In theory an unlimited number of sensors is supported. 
 
-so it probably will not be of any use for anybody until I get around to implementing a lot of flexibility for it...
+To achieve human-readable temperature sensor labels, place a file called "tempsensorlabels.txt" besides the fermentcontrol binary and add all temp sensors in the format as shown in this commit.
+
+
+Control functionality has been removed for now.
+
 
 
 ## Compilation ##
-Compilation is done by executing  
-``gcc fermentcontrol.c -o fermentcontrol``
+Compilation is done using the supplied Makefile
 
 ## Start ##
 Place an entry as below in your crontab. Type  
-``crontab -e ``
+``crontab -e ``  
 and place the following line at the bottom  
 ``*/5 *  *   *   *    /home/pi/fermentcontrol/fermentcontrol``
+
+
+## Outlook ##
+* Add function to auto-generate gnuplot_command.sh
+* Pass desired output log file name as parameter to binary
