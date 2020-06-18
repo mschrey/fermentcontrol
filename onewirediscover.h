@@ -12,9 +12,11 @@ struct tempsensorlist {
 };
 
 
-struct tempsensorlist * create(char *path, char *tempsensor);
+struct tempsensorlist * onewirediscover_create(char *path, char *tempsensor);
 
-void push(struct tempsensorlist *head, char *path, char *tempsensor);
+void onewirediscover_push(struct tempsensorlist *head, char *path, char *tempsensor);
+
+int onewirediscover_count(struct tempsensorlist *head);
 
 void print_tempsensorlist(struct tempsensorlist *head);
 

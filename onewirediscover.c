@@ -6,7 +6,7 @@
 
 
 
-struct tempsensorlist * create(char *path, char *tempsensor)
+struct tempsensorlist * onewirediscover_create(char *path, char *tempsensor)
 {
     struct tempsensorlist * head = malloc(sizeof(struct tempsensorlist));
     head->tempsensor = malloc(strlen(tempsensor) + strlen(path) + 13);
@@ -19,7 +19,7 @@ struct tempsensorlist * create(char *path, char *tempsensor)
 }
 
 
-void push(struct tempsensorlist *head, char *path, char *tempsensor)
+void onewirediscover_push(struct tempsensorlist *head, char *path, char *tempsensor)
 {
     struct tempsensorlist *new = malloc(sizeof(struct tempsensorlist));
     new->tempsensor = malloc(strlen(tempsensor) + strlen(path) + 13);
@@ -36,6 +36,17 @@ void push(struct tempsensorlist *head, char *path, char *tempsensor)
     current->next = new;
 }
 
+//counts list elements of passed list pointer
+int onewirediscover_count(struct tempsensorlist *head)
+{
+    struct tempsensorlist *current = head;
+    int i = 0;
+    while(current != NULL) {
+        i++;
+        current = current->next;
+    }
+    return i;
+}
 
 void print_tempsensorlist(struct tempsensorlist *head)
 {
@@ -64,9 +75,9 @@ struct tempsensorlist* get_temp_sensor(struct tempsensorlist *head, char *path)
                     char *family = strtok(temp, "-");
                     if(strcmp(family, "00") != 0) {                                    //filter out spurious sensors entry (Family Code is 0)                        
                         if(head == NULL) {
-                            head = create(path, dir->d_name);
+                            head = onewirediscover_create(path, dir->d_name);
                         } else {   
-                            push(head, path, dir->d_name);
+                            onewirediscover_push(head, path, dir->d_name);
                         }
                         //printf("%s/%s\n", path, dir->d_name);
                     }
