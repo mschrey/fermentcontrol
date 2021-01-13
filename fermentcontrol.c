@@ -11,7 +11,8 @@
 //              * append to logfile if it exists already
 //              * single temp logging per program start (for autostart and use with cron)
 // Version 0.5 Commented Output Switching
-// Version 0.6 Discovery and Labens of One-Wire Sensors introduced
+// Version 0.6 Discovery and Labels of One-Wire Sensors introduced
+// Version 0.7 Output Switching moved back in - adapted to new sensor list concept
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -21,6 +22,9 @@
 
 //28 00 4b 46 ff ff 0a 10 39 : crc=39 YES
 //28 00 4b 46 ff ff 0a 10 39 t=20125
+
+const char COMMAND_ON[100]  = "/home/pi/raspberry-remote/send 11001 1 1 >> /home/pi/brewcontrol_raspberry-remote_output.log";  //outlet A
+const char COMMAND_OFF[100] = "/home/pi/raspberry-remote/send 11001 1 0 >> /home/pi/brewcontrol_raspberry-remote_output.log";  //outlet A
 
 
 //checks if a file exists. 
@@ -68,10 +72,12 @@ long get_time(char *charpointer, time_t starttime)
 
 int main()
 {
-    char logfile[] = "/home/pi/fermentcontrol/fermentcontrol_2020-05-21_ipa-simcoe-2020.log";
+    char logfile[] = "/home/pi/fermentcontrol/fermentcontrol_2020-08-30_Trappist_2020.log";
+    char status[10];
     FILE *fp;
     char time_string [80];
     long seconds_since_start;
+    const double TEMP_SOLL = 24;
     time_t starttime;
     time(&starttime);  // get current time; same as: timer = time(NULL)  
 
@@ -84,6 +90,8 @@ int main()
     }    
     get_temp_sensor_labels(mytempsensorlist);
     
+    print_tempsensorlist(mytempsensorlist);
+       
     if(getFileExistence(logfile) == 0) { 
         fp = fopen(logfile,"a");
         fprintf(fp,"Welcome to BrewControl v0.5\n\n");
@@ -100,16 +108,28 @@ int main()
     get_all_temps(mytempsensorlist);
 
     seconds_since_start = get_time(time_string, starttime);
+    
+    current = mytempsensorlist;
+    //find correct temp sensor in list
+    while(strcmp(current->label, "1") != 0) {
+        current = current->next;
+    }
+    if ((double)current->temp_mc/1000 > TEMP_SOLL) {
+        system(COMMAND_OFF);
+        strcpy(status, "OFF");
+    } else {
+        system(COMMAND_ON);
+        strcpy(status, " ON");
+    }
 
     fp=fopen(logfile,"a");       
-    //fprintf(fp,"%s, %5d, %5.2f, %5.2f, %5.2f, %s\n", time_string, seconds_since_start, (double)temp1/1000, (double)temp2/1000, (double)temp3/1000, status);
     fprintf(fp,"%s, %5ld", time_string, seconds_since_start);
     current = mytempsensorlist;
     while(current != NULL) {
         fprintf(fp, ", %5.2f", (double)current->temp_mc/1000);
         current = current->next;
     }
-    fprintf(fp, "\n");
+    fprintf(fp, ", %s\n", status);
     fclose(fp);
     
     return 0;

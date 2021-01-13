@@ -146,7 +146,7 @@ void get_temp_sensor_labels(struct tempsensorlist *list)
     char templabel[10];
     struct tempsensorlist *current = list;
     FILE * fh;
-    fh = fopen("tempsensorlabels.txt", "r");
+    fh = fopen("/home/pi/fermentcontrol/tempsensorlabels.txt", "r");
     if (fh != NULL) {
         while(current != NULL) {      //iterate through sensor list
             while(fgets(line, 100, fh) != NULL) {    //iterate through list of labels 
